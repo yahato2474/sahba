@@ -137,7 +137,7 @@ enum Catalog {
 
     private static var actions: [WheelItem] { [
         WheelItem(id: "airdrop", title: "AirDrop", symbol: "dot.radiowaves.left.and.right", action: .now(Actions.airDrop)),
-        WheelItem(id: "taildrop", title: "Taildrop", symbol: "paperplane", accepts: Taildrop.isFile, action: .now(Taildrop.send)),
+        WheelItem(id: "taildrop", title: "Taildrop", symbol: "paperplane", action: .now(Taildrop.send)),
         WheelItem(id: "path", title: tr("نسخ المسار", "Copy Path", "パスをコピー"), symbol: "link", action: .now(Actions.copyPath)),
         WheelItem(id: "move", title: tr("نقل", "Move", "移動"), symbol: "folder", action: .now(Actions.move)),
         WheelItem(id: "terminal", title: tr("الطرفية", "Terminal", "ターミナル"), symbol: "terminal", action: .now(Actions.terminal)),

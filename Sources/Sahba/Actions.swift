@@ -61,7 +61,7 @@ enum Actions {
 }
 
 /// Sends files to one of your Tailscale devices with Taildrop (`tailscale file cp`).
-/// The device is picked from a menu at the cursor; folders can't be sent.
+/// The device is picked from a menu at the cursor. Taildrop can't send folders, so they go as a .zip.
 enum Taildrop {
     static let cli = ["/Applications/Tailscale.app/Contents/MacOS/Tailscale", "/opt/homebrew/bin/tailscale", "/usr/local/bin/tailscale"]
         .first { FileManager.default.isExecutableFile(atPath: $0) }
@@ -71,8 +71,8 @@ enum Taildrop {
         let online: Bool
     }
 
-    static func isFile(_ url: URL) -> Bool {
-        !((try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false)
+    static func isFolder(_ url: URL) -> Bool {
+        (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
     }
 
     /// `tailscale file cp --targets` prints "ip<TAB>name[<TAB>offline; last seen ...]", one device per line.
@@ -121,7 +121,22 @@ enum Taildrop {
         let id = HUD.shared.begin(tr("إرسال إلى \(device)", "Sending to \(device)", "\(device) に送信中"))
         Log.write("taildrop \(urls.count) -> \(device)")
         DispatchQueue.global(qos: .userInitiated).async {
-            let (status, _, err) = run(cli, ["file", "cp", "--update-interval=0"] + urls.map(\.path) + ["\(device):"])
+            // Folders are zipped into a temporary folder first, named like the folder ("Photos.zip").
+            let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("sahba-taildrop-\(UUID().uuidString)")
+            defer { try? FileManager.default.removeItem(at: tmp) }
+            var paths: [String] = []
+            var status: Int32 = 0, err = ""
+            for url in urls {
+                guard isFolder(url) else { paths.append(url.path); continue }
+                try? FileManager.default.createDirectory(at: tmp, withIntermediateDirectories: true)
+                let zip = Output.unique(in: tmp, base: url.lastPathComponent, ext: "zip")
+                (status, _, err) = run("/usr/bin/ditto", ["-c", "-k", "--norsrc", "--noextattr", "--noqtn", "--keepParent", url.path, zip.path])
+                guard status == 0 else { break }
+                paths.append(zip.path)
+            }
+            if status == 0 {
+                (status, _, err) = run(cli, ["file", "cp", "--update-interval=0"] + paths + ["\(device):"])
+            }
             DispatchQueue.main.async {
                 if status == 0 {
                     HUD.shared.finish(id, title: tr("انرسل: \(name)", "Sent: \(name)", "送信完了: \(name)"), failed: false)
