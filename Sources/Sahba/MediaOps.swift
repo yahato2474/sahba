@@ -114,7 +114,7 @@ enum FF {
         guard p.terminationStatus == 0 else {
             lock.lock(); let msg = String(decoding: errData, as: UTF8.self); lock.unlock()
             Log.write("ffmpeg failed \(args): \(msg.suffix(500))")
-            let last = msg.split(separator: "\n").last.map(String.init) ?? tr("فشل", "failed")
+            let last = msg.split(separator: "\n").last.map(String.init) ?? tr("فشل", "failed", "失敗")
             throw OpError.failed("ffmpeg: \(last)")
         }
     }
@@ -228,7 +228,7 @@ enum MediaOps {
         guard info.duration > 0 else { throw OpError.unreadable }
         let total = Double(Kinds.size(url)) * 8 * fraction / info.duration
         let videoBits = max(150_000, total - 128_000)
-        let out = Output.url(next: url, suffix: tr("مضغوط", "Compressed"), ext: "mp4")
+        let out = Output.url(next: url, suffix: tr("مضغوط", "Compressed", "圧縮"), ext: "mp4")
         try FF.run(["-i", url.path, "-map", "0:v:0", "-map", "0:a?", "-c:v", "hevc_videotoolbox",
                     "-b:v", String(Int(videoBits)), "-tag:v", "hvc1", "-c:a", "aac_at", "-b:a", "128k",
                     "-movflags", "+faststart", out.path], duration: info.duration, progress: progress)
@@ -247,7 +247,7 @@ enum MediaOps {
         case "opus", "ogg": (codec, ext) = ("libopus", e)
         default: (codec, ext) = ("aac_at", "m4a")
         }
-        let out = Output.url(next: url, suffix: tr("مضغوط", "Compressed"), ext: ext)
+        let out = Output.url(next: url, suffix: tr("مضغوط", "Compressed", "圧縮"), ext: ext)
         try FF.run(["-i", url.path, "-vn", "-map", "0:a:0", "-c:a", codec, "-b:a", bitrate, out.path],
                    duration: info.duration, progress: progress)
         return out
@@ -256,7 +256,7 @@ enum MediaOps {
     /// Frame-accurate and lossless for MOV/MP4/M4A (AVFoundation); ffmpeg stream copy for the rest.
     static func trim(_ url: URL, start: Double, end: Double, progress: @escaping (Double) -> Void) throws -> URL {
         let e = Kinds.ext(url)
-        let out = Output.url(next: url, suffix: tr("مقصوص", "Trimmed"), ext: e)
+        let out = Output.url(next: url, suffix: tr("مقصوص", "Trimmed", "トリム"), ext: e)
         let types: [String: AVFileType] = ["mov": .mov, "mp4": .mp4, "m4v": .m4v, "m4a": .m4a]
         if let type = types[e] {
             let asset = AVURLAsset(url: url)
@@ -272,7 +272,7 @@ enum MediaOps {
             while done.wait(timeout: .now() + 0.1) == .timedOut { progress(Double(session.progress)) }
             guard session.status == .completed else {
                 try? FileManager.default.removeItem(at: out)
-                throw OpError.failed(session.error?.localizedDescription ?? tr("ما زبط القص", "Trim failed"))
+                throw OpError.failed(session.error?.localizedDescription ?? tr("ما زبط القص", "Trim failed", "トリムに失敗しました"))
             }
             return out
         }
@@ -319,25 +319,25 @@ enum MediaOps {
         done.wait()
         guard session.status == .completed else {
             try? FileManager.default.removeItem(at: out)
-            throw OpError.failed(session.error?.localizedDescription ?? tr("ما زبط", "Failed"))
+            throw OpError.failed(session.error?.localizedDescription ?? tr("ما زبط", "Failed", "失敗しました"))
         }
     }
 
     /// Turns the video 90° clockwise by changing its display rotation (no re-encoding).
     static func rotateVideo(_ url: URL) throws -> URL {
-        let avOut = Output.url(next: url, suffix: tr("مدوّر", "Rotated"), ext: Kinds.ext(url))
+        let avOut = Output.url(next: url, suffix: tr("مدوّر", "Rotated", "回転"), ext: Kinds.ext(url))
         if (try? avRewrap(url, to: avOut, extraRotation: .pi / 2, clearMetadata: false)) != nil { return avOut }
         let info = FF.info(url)
         var angle = info.rotation - 90
         while angle <= -180 { angle += 360 }
-        let out = Output.url(next: url, suffix: tr("مدوّر", "Rotated"), ext: Kinds.ext(url))
+        let out = Output.url(next: url, suffix: tr("مدوّر", "Rotated", "回転"), ext: Kinds.ext(url))
         try FF.run(["-display_rotation:v:0", String(Int(angle)), "-i", url.path, "-map", "0:v:0", "-map", "0:a?",
                     "-c", "copy", out.path], duration: info.duration) { _ in }
         return out
     }
 
     static func stripMetadata(_ url: URL, audioOnly: Bool) throws -> URL {
-        let out = Output.url(next: url, suffix: tr("بدون بيانات", "No Metadata"), ext: Kinds.ext(url))
+        let out = Output.url(next: url, suffix: tr("بدون بيانات", "No Metadata", "情報削除"), ext: Kinds.ext(url))
         if !audioOnly, (try? avRewrap(url, to: out, extraRotation: nil, clearMetadata: true)) != nil { return out }
         let info = FF.info(url)
         let maps = audioOnly ? ["-map", "0:a"] : ["-map", "0:v:0", "-map", "0:a?"]

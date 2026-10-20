@@ -5,7 +5,7 @@ enum Actions {
     static func airDrop(_ urls: [URL]) {
         NSApp.activate(ignoringOtherApps: true)
         guard let service = NSSharingService(named: .sendViaAirDrop), service.canPerform(withItems: urls) else {
-            HUD.shared.flash(tr("AirDrop مو متاح الحين", "AirDrop isn't available right now"), failed: true)
+            HUD.shared.flash(tr("AirDrop مو متاح الحين", "AirDrop isn't available right now", "今はAirDropを使えません"), failed: true)
             return
         }
         service.perform(withItems: urls)
@@ -15,7 +15,7 @@ enum Actions {
         let pb = NSPasteboard.general
         pb.clearContents()
         pb.setString(urls.map(\.path).joined(separator: "\n"), forType: .string)
-        HUD.shared.flash(urls.count == 1 ? tr("انتسخ المسار", "Path copied") : tr("انتسخت \(urls.count) مسارات", "\(urls.count) paths copied"))
+        HUD.shared.flash(urls.count == 1 ? tr("انتسخ المسار", "Path copied", "パスをコピーしました") : tr("انتسخت \(urls.count) مسارات", "\(urls.count) paths copied", "\(urls.count)件のパスをコピーしました"))
     }
 
     static func move(_ urls: [URL]) {
@@ -24,10 +24,10 @@ enum Actions {
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
-        panel.prompt = tr("انقل هنا", "Move Here")
+        panel.prompt = tr("انقل هنا", "Move Here", "ここに移動")
         panel.message = urls.count == 1
-            ? tr("وين تبي تنقل \(urls[0].lastPathComponent)؟", "Where should \(urls[0].lastPathComponent) go?")
-            : tr("وين تبي تنقل \(urls.count) ملفات؟", "Where should \(urls.count) files go?")
+            ? tr("وين تبي تنقل \(urls[0].lastPathComponent)؟", "Where should \(urls[0].lastPathComponent) go?", "\(urls[0].lastPathComponent) をどこに移動しますか？")
+            : tr("وين تبي تنقل \(urls.count) ملفات؟", "Where should \(urls.count) files go?", "\(urls.count)個のファイルをどこに移動しますか？")
         panel.directoryURL = urls.first?.deletingLastPathComponent()
         guard panel.runModal() == .OK, let dir = panel.url else { return }
         var moved = 0
@@ -42,8 +42,8 @@ enum Actions {
                 Log.write("move failed \(url.path): \(error)")
             }
         }
-        HUD.shared.flash(moved == urls.count ? tr("انتقلت إلى \(dir.lastPathComponent)", "Moved to \(dir.lastPathComponent)")
-                                            : tr("انتقل \(moved) من \(urls.count)", "Moved \(moved) of \(urls.count)"),
+        HUD.shared.flash(moved == urls.count ? tr("انتقلت إلى \(dir.lastPathComponent)", "Moved to \(dir.lastPathComponent)", "\(dir.lastPathComponent) に移動しました")
+                                            : tr("انتقل \(moved) من \(urls.count)", "Moved \(moved) of \(urls.count)", "\(urls.count)個中\(moved)個を移動しました"),
                          failed: moved < urls.count)
     }
 
@@ -133,14 +133,14 @@ final class ShelfView: NSView {
 
     private func rebuild() {
         subviews.forEach { $0.removeFromSuperview() }
-        let title = NSTextField(labelWithString: urls.count == 1 ? tr("ملف معلّق", "1 floating file") : tr("\(urls.count) ملفات معلّقة", "\(urls.count) floating files"))
+        let title = NSTextField(labelWithString: urls.count == 1 ? tr("ملف معلّق", "1 floating file", "フロート中のファイル 1個") : tr("\(urls.count) ملفات معلّقة", "\(urls.count) floating files", "フロート中のファイル \(urls.count)個"))
         title.font = .systemFont(ofSize: 12, weight: .semibold)
         title.textColor = .secondaryLabelColor
         title.alignment = L10n.arabic ? .right : .left
         title.frame = NSRect(x: 40, y: 11, width: Self.width - 54, height: 16)
         addSubview(title)
 
-        let close = NSButton(image: NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: tr("سكّر", "Close"))!,
+        let close = NSButton(image: NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: tr("سكّر", "Close", "閉じる"))!,
                              target: self, action: #selector(closeTapped))
         close.isBordered = false
         close.contentTintColor = .secondaryLabelColor
@@ -153,7 +153,7 @@ final class ShelfView: NSView {
             addSubview(tile)
         }
         if urls.count > Self.maxRows {
-            title.stringValue += tr(" (يبين أول \(Self.maxRows))", " (showing \(Self.maxRows))")
+            title.stringValue += tr(" (يبين أول \(Self.maxRows))", " (showing \(Self.maxRows))", "（先頭\(Self.maxRows)個を表示）")
         }
     }
 

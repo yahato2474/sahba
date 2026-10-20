@@ -10,7 +10,7 @@ import SwiftUI
 //   Sahba --snapshot-ui <compress|crop> <file> <out.png>
 let args = CommandLine.arguments
 if let i = args.firstIndex(of: "--lang"), i + 1 < args.count {
-    L10n.override = args[i + 1] == "en" ? .english : .arabic
+    L10n.override = ["en": .english, "ja": .japanese][args[i + 1]] ?? .arabic
 }
 if args.contains("--version") { print(CLI.version); exit(0) }
 if args.contains("--doctor") { exit(CLI.doctor()) }
@@ -69,38 +69,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.autoenablesItems = false
         menu.userInterfaceLayoutDirection = L10n.arabic ? .rightToLeft : .leftToRight
-        for line in [tr("اسحب ملف واضغط ⇧ للتحويل", "Drag a file and press ⇧ to convert"),
-                     tr("وأنت فاتح العجلة: ⌘ أدوات، ⌃ إجراءات", "While the wheel is open: ⌘ Tools, ⌃ Actions")] {
+        for line in [tr("اسحب ملف واضغط ⇧ للتحويل", "Drag a file and press ⇧ to convert", "ファイルをドラッグ中に ⇧ で変換"),
+                     tr("وأنت فاتح العجلة: ⌘ أدوات، ⌃ إجراءات", "While the wheel is open: ⌘ Tools, ⌃ Actions", "ホイール表示中: ⌘ ツール、⌃ アクション")] {
             let item = NSMenuItem(title: line, action: nil, keyEquivalent: "")
             item.isEnabled = false
             menu.addItem(item)
         }
         // A fresh item each time: one NSMenuItem can't sit in two menus.
         if let lastName {
-            let lastItem = NSMenuItem(title: tr("آخر ملف: \(lastName)", "Last file: \(lastName)"), action: nil, keyEquivalent: "")
+            let lastItem = NSMenuItem(title: tr("آخر ملف: \(lastName)", "Last file: \(lastName)", "最後のファイル: \(lastName)"), action: nil, keyEquivalent: "")
             lastItem.isEnabled = false
             menu.addItem(lastItem)
         }
         menu.addItem(.separator())
 
         let languages = NSMenu()
-        for (lang, title) in [(Language.auto, tr("تلقائي (لغة الماك)", "Automatic (Mac language)")),
-                              (.arabic, "العربية"), (.english, "English")] {
+        for (lang, title) in [(Language.auto, tr("تلقائي (لغة الماك)", "Automatic (Mac language)", "自動（Macの言語）")),
+                              (.arabic, "العربية"), (.english, "English"), (.japanese, "日本語")] {
             let item = NSMenuItem(title: title, action: #selector(chooseLanguage(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = lang.rawValue
             item.state = L10n.setting == lang ? .on : .off
             languages.addItem(item)
         }
-        let languageItem = NSMenuItem(title: tr("اللغة", "Language"), action: nil, keyEquivalent: "")
+        let languageItem = NSMenuItem(title: tr("اللغة", "Language", "言語"), action: nil, keyEquivalent: "")
         languageItem.submenu = languages
         menu.addItem(languageItem)
 
-        let loginItem = NSMenuItem(title: tr("تشغيل مع الماك", "Open at Login"), action: #selector(toggleLogin), keyEquivalent: "")
+        let loginItem = NSMenuItem(title: tr("تشغيل مع الماك", "Open at Login", "ログイン時に開く"), action: #selector(toggleLogin), keyEquivalent: "")
         loginItem.target = self
         loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(loginItem)
-        menu.addItem(NSMenuItem(title: tr("إنهاء سحبة", "Quit Sahba"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: tr("إنهاء سحبة", "Quit Sahba", "Sahbaを終了"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
     }
 
@@ -119,7 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 try SMAppService.mainApp.register()
             }
         } catch {
-            HUD.shared.flash(tr("ما قدرت أغيّر التشغيل مع الماك", "Couldn't change Open at Login"), failed: true)
+            HUD.shared.flash(tr("ما قدرت أغيّر التشغيل مع الماك", "Couldn't change Open at Login", "「ログイン時に開く」を変更できませんでした"), failed: true)
             Log.write("login item: \(error)")
         }
         buildMenu()
@@ -150,7 +150,7 @@ enum CLI {
         let os = ProcessInfo.processInfo.operatingSystemVersion
         print("macOS \(os.majorVersion).\(os.minorVersion).\(os.patchVersion)")
         print("chip: \(chip.isEmpty ? "unknown" : chip)")
-        print("language: \(L10n.setting.rawValue) (\(L10n.arabic ? "Arabic" : "English"))")
+        print("language: \(L10n.setting.rawValue) (\(L10n.current == .auto ? "English" : L10n.current.rawValue))")
         print("HDR photos: \(hdr)")
         var ok = true
         for (name, path) in [("ffmpeg", FF.ffmpeg), ("ffprobe", FF.ffprobe)] {

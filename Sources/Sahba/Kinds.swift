@@ -88,9 +88,9 @@ enum OpError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .unreadable: return tr("ما قدرت أقرا الملف", "Couldn't read the file")
-        case .unwritable: return tr("ما قدرت أحفظ الناتج", "Couldn't save the result")
-        case .missingTool(let t): return tr("يحتاج \(t)", "Needs \(t)")
+        case .unreadable: return tr("ما قدرت أقرا الملف", "Couldn't read the file", "ファイルを読み込めませんでした")
+        case .unwritable: return tr("ما قدرت أحفظ الناتج", "Couldn't save the result", "結果を保存できませんでした")
+        case .missingTool(let t): return tr("يحتاج \(t)", "Needs \(t)", "\(t) が必要です")
         case .failed(let m): return m
         }
     }

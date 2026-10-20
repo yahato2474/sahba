@@ -367,11 +367,11 @@ final class WheelView: NSView {
     }
 
     private func drawHub(_ c: NSPoint) {
-        var title = tr("سحبة", "Sahba"), detail = mode.title
+        var title = tr("سحبة", "Sahba", "Sahba"), detail = mode.title
         if let kind {
             title = countText(kind)
             if items.isEmpty {
-                detail = tr("ما في \(mode.title)", "Not available")
+                detail = tr("ما في \(mode.title)", "Not available", "使えません")
             } else if totalBytes > 0 {
                 detail = L10n.size(totalBytes)
             }
@@ -387,17 +387,19 @@ final class WheelView: NSView {
     private func countText(_ kind: FileKind) -> String {
         let n = files.count
         if kind == .image {
+            if L10n.japanese { return n == 1 ? "画像" : "画像 \(n)枚" }
             return L10n.arabic ? (n == 1 ? "صورة" : n == 2 ? "صورتين" : "\(n) صور") : (n == 1 ? "Photo" : "\(n) Photos")
         }
         if n == 1 {
             switch kind {
-            case .video: return tr("فيديو", "Video")
-            case .audio: return tr("صوت", "Audio")
+            case .video: return tr("فيديو", "Video", "動画")
+            case .audio: return tr("صوت", "Audio", "音声")
             case .pdf: return "PDF"
-            case .document: return tr("مستند", "Document")
-            default: return tr("ملف", "File")
+            case .document: return tr("مستند", "Document", "書類")
+            default: return tr("ملف", "File", "ファイル")
             }
         }
+        if L10n.japanese { return "ファイル \(n)個" }
         return L10n.arabic ? (n == 2 ? "ملفين" : "\(n) ملفات") : "\(n) Files"
     }
 

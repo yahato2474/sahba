@@ -40,7 +40,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>LSUIElement</key><true/>
   <key>LSArchitecturePriority</key><array><string>arm64</string></array>
   <key>CFBundleDevelopmentRegion</key><string>ar</string>
-  <key>CFBundleLocalizations</key><array><string>ar</string><string>en</string></array>
+  <key>CFBundleLocalizations</key><array><string>ar</string><string>en</string><string>ja</string></array>
   <key>CFBundleAllowMixedLocalizations</key><true/>
   <key>NSHighResolutionCapable</key><true/>
 </dict>

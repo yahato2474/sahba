@@ -4,7 +4,7 @@ import AppKit
 enum WheelMode: Int, CaseIterable {
     case convert, tools, actions
 
-    var title: String { [tr("تحويل", "Convert"), tr("أدوات", "Tools"), tr("إجراءات", "Actions")][rawValue] }
+    var title: String { [tr("تحويل", "Convert", "変換"), tr("أدوات", "Tools", "ツール"), tr("إجراءات", "Actions", "アクション")][rawValue] }
     var key: String { ["⇧", "⌘", "⌃"][rawValue] }
 
     /// The wheels whose keys are down right now.
@@ -57,7 +57,7 @@ enum Catalog {
 
     private static func convert(_ kind: FileKind) -> [WheelItem] {
         func item(_ t: Target, _ work: @escaping (URL, @escaping (Double) -> Void) throws -> [URL]) -> WheelItem {
-            WheelItem(id: t.ext, title: t.label, accepts: { !t.matches($0) }, action: .perFile(tr("إلى \(t.label)", "To \(t.label)"), work))
+            WheelItem(id: t.ext, title: t.label, accepts: { !t.matches($0) }, action: .perFile(tr("إلى \(t.label)", "To \(t.label)", "\(t.label)に変換"), work))
         }
         switch kind {
         case .image:
@@ -88,45 +88,45 @@ enum Catalog {
     // MARK: Cmd: tools
 
     private static func tools(_ kind: FileKind) -> [WheelItem] {
-        let compress = WheelItem(id: "compress", title: tr("ضغط", "Compress"), symbol: "arrow.down.right.and.arrow.up.left",
+        let compress = WheelItem(id: "compress", title: tr("ضغط", "Compress", "圧縮"), symbol: "arrow.down.right.and.arrow.up.left",
                                  action: .window { ToolWindows.compress($0, kind: kind) })
         switch kind {
         case .image:
             return [
                 compress,
-                WheelItem(id: "crop", title: tr("قص", "Crop"), symbol: "crop", maxCount: 1, action: .window { ToolWindows.crop($0[0]) }),
-                WheelItem(id: "rotate", title: tr("تدوير", "Rotate"), symbol: "rotate.right",
-                          action: .perFile(tr("تدوير", "Rotating")) { url, _ in [try ImageOps.rotate(url)] }),
-                WheelItem(id: "strip", title: tr("بدون بيانات", "No Metadata"), symbol: "eye.slash",
-                          action: .perFile(tr("حذف البيانات", "Removing metadata")) { url, _ in [try ImageOps.stripMetadata(url)] }),
-                WheelItem(id: "merge", title: tr("دمج PDF", "Merge PDF"), symbol: "doc.on.doc", minCount: 2,
-                          action: .together(tr("دمج في PDF", "Merging into PDF")) { urls, _ in [try ImageOps.mergeToPDF(urls)] }),
+                WheelItem(id: "crop", title: tr("قص", "Crop", "切り抜き"), symbol: "crop", maxCount: 1, action: .window { ToolWindows.crop($0[0]) }),
+                WheelItem(id: "rotate", title: tr("تدوير", "Rotate", "回転"), symbol: "rotate.right",
+                          action: .perFile(tr("تدوير", "Rotating", "回転中")) { url, _ in [try ImageOps.rotate(url)] }),
+                WheelItem(id: "strip", title: tr("بدون بيانات", "No Metadata", "情報削除"), symbol: "eye.slash",
+                          action: .perFile(tr("حذف البيانات", "Removing metadata", "メタデータを削除中")) { url, _ in [try ImageOps.stripMetadata(url)] }),
+                WheelItem(id: "merge", title: tr("دمج PDF", "Merge PDF", "PDF結合"), symbol: "doc.on.doc", minCount: 2,
+                          action: .together(tr("دمج في PDF", "Merging into PDF", "PDFに結合中")) { urls, _ in [try ImageOps.mergeToPDF(urls)] }),
             ]
         case .video:
             return [
                 compress,
-                WheelItem(id: "trim", title: tr("قص", "Trim"), symbol: "scissors", maxCount: 1, action: .window { ToolWindows.trim($0[0]) }),
-                WheelItem(id: "rotate", title: tr("تدوير", "Rotate"), symbol: "rotate.right",
+                WheelItem(id: "trim", title: tr("قص", "Trim", "トリム"), symbol: "scissors", maxCount: 1, action: .window { ToolWindows.trim($0[0]) }),
+                WheelItem(id: "rotate", title: tr("تدوير", "Rotate", "回転"), symbol: "rotate.right",
                           accepts: { MediaOps.rotatable.contains(Kinds.ext($0)) },
-                          action: .perFile(tr("تدوير", "Rotating")) { url, _ in [try MediaOps.rotateVideo(url)] }),
-                WheelItem(id: "strip", title: tr("بدون بيانات", "No Metadata"), symbol: "eye.slash",
-                          action: .perFile(tr("حذف البيانات", "Removing metadata")) { url, _ in [try MediaOps.stripMetadata(url, audioOnly: false)] }),
+                          action: .perFile(tr("تدوير", "Rotating", "回転中")) { url, _ in [try MediaOps.rotateVideo(url)] }),
+                WheelItem(id: "strip", title: tr("بدون بيانات", "No Metadata", "情報削除"), symbol: "eye.slash",
+                          action: .perFile(tr("حذف البيانات", "Removing metadata", "メタデータを削除中")) { url, _ in [try MediaOps.stripMetadata(url, audioOnly: false)] }),
             ]
         case .audio:
             return [
                 compress,
-                WheelItem(id: "trim", title: tr("قص", "Trim"), symbol: "scissors", maxCount: 1, action: .window { ToolWindows.trim($0[0]) }),
-                WheelItem(id: "strip", title: tr("بدون بيانات", "No Metadata"), symbol: "eye.slash",
-                          action: .perFile(tr("حذف البيانات", "Removing metadata")) { url, _ in [try MediaOps.stripMetadata(url, audioOnly: true)] }),
+                WheelItem(id: "trim", title: tr("قص", "Trim", "トリム"), symbol: "scissors", maxCount: 1, action: .window { ToolWindows.trim($0[0]) }),
+                WheelItem(id: "strip", title: tr("بدون بيانات", "No Metadata", "情報削除"), symbol: "eye.slash",
+                          action: .perFile(tr("حذف البيانات", "Removing metadata", "メタデータを削除中")) { url, _ in [try MediaOps.stripMetadata(url, audioOnly: true)] }),
             ]
         case .pdf:
             return [
-                WheelItem(id: "compress", title: tr("ضغط", "Compress"), symbol: "arrow.down.right.and.arrow.up.left",
-                          action: .perFile(tr("ضغط PDF", "Compressing PDF")) { url, _ in [try DocOps.compressPDF(url)] }),
-                WheelItem(id: "merge", title: tr("دمج", "Merge"), symbol: "doc.on.doc", minCount: 2,
-                          action: .together(tr("دمج PDF", "Merging PDFs")) { urls, _ in [try DocOps.mergePDFs(urls)] }),
-                WheelItem(id: "strip", title: tr("بدون بيانات", "No Metadata"), symbol: "eye.slash",
-                          action: .perFile(tr("حذف البيانات", "Removing metadata")) { url, _ in [try DocOps.stripPDF(url)] }),
+                WheelItem(id: "compress", title: tr("ضغط", "Compress", "圧縮"), symbol: "arrow.down.right.and.arrow.up.left",
+                          action: .perFile(tr("ضغط PDF", "Compressing PDF", "PDFを圧縮中")) { url, _ in [try DocOps.compressPDF(url)] }),
+                WheelItem(id: "merge", title: tr("دمج", "Merge", "結合"), symbol: "doc.on.doc", minCount: 2,
+                          action: .together(tr("دمج PDF", "Merging PDFs", "PDFを結合中")) { urls, _ in [try DocOps.mergePDFs(urls)] }),
+                WheelItem(id: "strip", title: tr("بدون بيانات", "No Metadata", "情報削除"), symbol: "eye.slash",
+                          action: .perFile(tr("حذف البيانات", "Removing metadata", "メタデータを削除中")) { url, _ in [try DocOps.stripPDF(url)] }),
             ]
         case .document, .other:
             return []
@@ -137,10 +137,10 @@ enum Catalog {
 
     private static var actions: [WheelItem] { [
         WheelItem(id: "airdrop", title: "AirDrop", symbol: "dot.radiowaves.left.and.right", action: .now(Actions.airDrop)),
-        WheelItem(id: "path", title: tr("نسخ المسار", "Copy Path"), symbol: "link", action: .now(Actions.copyPath)),
-        WheelItem(id: "move", title: tr("نقل", "Move"), symbol: "folder", action: .now(Actions.move)),
-        WheelItem(id: "terminal", title: tr("الطرفية", "Terminal"), symbol: "terminal", action: .now(Actions.terminal)),
-        WheelItem(id: "float", title: tr("تعويم", "Float"), symbol: "pin", action: .now(Actions.float)),
+        WheelItem(id: "path", title: tr("نسخ المسار", "Copy Path", "パスをコピー"), symbol: "link", action: .now(Actions.copyPath)),
+        WheelItem(id: "move", title: tr("نقل", "Move", "移動"), symbol: "folder", action: .now(Actions.move)),
+        WheelItem(id: "terminal", title: tr("الطرفية", "Terminal", "ターミナル"), symbol: "terminal", action: .now(Actions.terminal)),
+        WheelItem(id: "float", title: tr("تعويم", "Float", "フロート"), symbol: "pin", action: .now(Actions.float)),
     ] }
 }
 

@@ -32,7 +32,7 @@ enum ToolWindows {
         let view = CompressView(files: files, kind: kind) { fraction in
             handle.close()
             guard let fraction else { return }
-            Jobs.perFile(tr("ضغط", "Compressing"), files: files) { url, p in
+            Jobs.perFile(tr("ضغط", "Compressing", "圧縮中"), files: files) { url, p in
                 switch kind {
                 case .image: return [try ImageOps.compress(url, quality: fraction)]
                 case .video: return [try MediaOps.compressVideo(url, fraction: fraction, progress: p)]
@@ -40,31 +40,31 @@ enum ToolWindows {
                 }
             }
         }
-        handle.window = present(tr("ضغط", "Compress"), view)
+        handle.window = present(tr("ضغط", "Compress", "圧縮"), view)
     }
 
     static func crop(_ url: URL) {
-        guard let image = ImageOps.orientedImage(url) else { HUD.shared.flash(tr("ما قدرت أفتح الصورة", "Couldn't open the photo"), failed: true); return }
+        guard let image = ImageOps.orientedImage(url) else { HUD.shared.flash(tr("ما قدرت أفتح الصورة", "Couldn't open the photo", "画像を開けませんでした"), failed: true); return }
         let handle = Handle()
         let view = CropView(image: image, name: url.lastPathComponent) { rect in
             handle.close()
             guard let rect else { return }
-            Jobs.perFile(tr("قص", "Cropping"), files: [url]) { url, _ in [try ImageOps.crop(url, rect: rect)] }
+            Jobs.perFile(tr("قص", "Cropping", "切り抜き中"), files: [url]) { url, _ in [try ImageOps.crop(url, rect: rect)] }
         }
-        handle.window = present(tr("قص الصورة", "Crop Photo"), view)
+        handle.window = present(tr("قص الصورة", "Crop Photo", "画像の切り抜き"), view)
     }
 
     static func trim(_ url: URL) {
         let duration = CMTimeGetSeconds(AVURLAsset(url: url).duration)
         let length = duration.isFinite && duration > 0 ? duration : FF.info(url).duration
-        guard length > 0 else { HUD.shared.flash(tr("ما قدرت أقرا المدة", "Couldn't read the length"), failed: true); return }
+        guard length > 0 else { HUD.shared.flash(tr("ما قدرت أقرا المدة", "Couldn't read the length", "長さを読み込めませんでした"), failed: true); return }
         let handle = Handle()
         let view = TrimView(url: url, duration: length, isVideo: Kinds.kind(url) == .video) { range in
             handle.close()
             guard let range else { return }
-            Jobs.perFile(tr("قص", "Trimming"), files: [url]) { url, p in [try MediaOps.trim(url, start: range.0, end: range.1, progress: p)] }
+            Jobs.perFile(tr("قص", "Trimming", "トリム中"), files: [url]) { url, p in [try MediaOps.trim(url, start: range.0, end: range.1, progress: p)] }
         }
-        handle.window = present(tr("قص المقطع", "Trim Clip"), view)
+        handle.window = present(tr("قص المقطع", "Trim Clip", "クリップのトリム"), view)
     }
 }
 
@@ -100,22 +100,22 @@ struct CompressView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             header("arrow.down.right.and.arrow.up.left",
-                   files.count == 1 ? files[0].lastPathComponent : tr("\(files.count) ملفات", "\(files.count) files"),
-                   tr("الحجم الحين: \(sizeText(original))", "Now: \(sizeText(original))"))
+                   files.count == 1 ? files[0].lastPathComponent : tr("\(files.count) ملفات", "\(files.count) files", "\(files.count)個のファイル"),
+                   tr("الحجم الحين: \(sizeText(original))", "Now: \(sizeText(original))", "現在: \(sizeText(original))"))
             VStack(alignment: .leading, spacing: 6) {
-                Text(kind == .image ? tr("الجودة: \(Int(model.percent))٪", "Quality: \(Int(model.percent))%")
-                                     : tr("الحجم الجديد: \(Int(model.percent))٪ من الأصلي", "New size: \(Int(model.percent))% of the original"))
+                Text(kind == .image ? tr("الجودة: \(Int(model.percent))٪", "Quality: \(Int(model.percent))%", "画質: \(Int(model.percent))%")
+                                     : tr("الحجم الجديد: \(Int(model.percent))٪ من الأصلي", "New size: \(Int(model.percent))% of the original", "新しいサイズ: 元の\(Int(model.percent))%"))
                     .font(.system(size: 13, weight: .medium))
                 Slider(value: $model.percent, in: 10...90, step: 5)
             }
             HStack {
-                Text(tr("المتوقع:", "Expected:")).foregroundStyle(.secondary)
+                Text(tr("المتوقع:", "Expected:", "予想:")).foregroundStyle(.secondary)
                 Text(model.estimate.map(sizeText) ?? "…").font(.system(size: 18, weight: .bold, design: .rounded)).monospacedDigit()
             }
             HStack {
                 Spacer()
-                Button(tr("إلغاء", "Cancel")) { onDone(nil) }.keyboardShortcut(.cancelAction)
-                Button(tr("احفظ", "Save")) { onDone(model.percent / 100) }.keyboardShortcut(.defaultAction)
+                Button(tr("إلغاء", "Cancel", "キャンセル")) { onDone(nil) }.keyboardShortcut(.cancelAction)
+                Button(tr("احفظ", "Save", "保存")) { onDone(model.percent / 100) }.keyboardShortcut(.defaultAction)
             }
         }
         .padding(24).padding(.top, 8)
@@ -156,7 +156,8 @@ struct CropView: View {
     private static let ratioValues: [CGFloat?] = [nil, 1, 4.0 / 3, 16.0 / 9, 9.0 / 16]
     private static let arabicNames = ["حر", "١:١", "٤:٣", "١٦:٩", "٩:١٦"]
     private static let englishNames = ["Free", "1:1", "4:3", "16:9", "9:16"]
-    private let ratios: [(String, CGFloat?)] = Array(zip(L10n.arabic ? CropView.arabicNames : CropView.englishNames, CropView.ratioValues))
+    private static let japaneseNames = ["自由", "1:1", "4:3", "16:9", "9:16"]
+    private let ratios: [(String, CGFloat?)] = Array(zip(L10n.arabic ? CropView.arabicNames : L10n.japanese ? CropView.japaneseNames : CropView.englishNames, CropView.ratioValues))
     private var pw: CGFloat { CGFloat(image.width) }
     private var ph: CGFloat { CGFloat(image.height) }
     private var ratio: CGFloat? { ratios[model.ratioIndex].1 }
@@ -168,7 +169,7 @@ struct CropView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            header("crop", name, tr("اسحب الزوايا، أو حرّك المربع", "Drag the corners, or move the box"))
+            header("crop", name, tr("اسحب الزوايا، أو حرّك المربع", "Drag the corners, or move the box", "角をドラッグするか、枠を移動してください"))
             canvas.environment(\.layoutDirection, .leftToRight).padding(10)
             Picker("", selection: $model.ratioIndex) {
                 ForEach(ratios.indices, id: \.self) { Text(ratios[$0].0).tag($0) }
@@ -176,12 +177,12 @@ struct CropView: View {
             .pickerStyle(.segmented).labelsHidden().frame(width: 360)
             .onChange(of: model.ratioIndex) { _ in applyRatio() }
             HStack {
-                Text(verbatim: "\(Int((model.rect.width * pw).rounded())) × \(Int((model.rect.height * ph).rounded())) \(tr("بكسل", "px"))")
+                Text(verbatim: "\(Int((model.rect.width * pw).rounded())) × \(Int((model.rect.height * ph).rounded())) \(tr("بكسل", "px", "px"))")
                     .monospacedDigit().foregroundStyle(.secondary)
                 Spacer()
-                Button(tr("رجّع", "Reset")) { model.rect = CGRect(x: 0, y: 0, width: 1, height: 1); model.ratioIndex = 0 }
-                Button(tr("إلغاء", "Cancel")) { onDone(nil) }.keyboardShortcut(.cancelAction)
-                Button(tr("احفظ", "Save")) { onDone(model.rect) }.keyboardShortcut(.defaultAction)
+                Button(tr("رجّع", "Reset", "リセット")) { model.rect = CGRect(x: 0, y: 0, width: 1, height: 1); model.ratioIndex = 0 }
+                Button(tr("إلغاء", "Cancel", "キャンセル")) { onDone(nil) }.keyboardShortcut(.cancelAction)
+                Button(tr("احفظ", "Save", "保存")) { onDone(model.rect) }.keyboardShortcut(.defaultAction)
             }
         }
         .padding(22).padding(.top, 8)
@@ -289,7 +290,7 @@ struct TrimView: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            header("scissors", url.lastPathComponent, tr("حرّك الطرفين وتختار المقطع اللي تبيه", "Drag both ends to pick the part you want"))
+            header("scissors", url.lastPathComponent, tr("حرّك الطرفين وتختار المقطع اللي تبيه", "Drag both ends to pick the part you want", "両端をドラッグして残す部分を選んでください"))
             PlayerView(player: player).frame(width: 560, height: isVideo ? 315 : 54)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
             Group {
@@ -297,7 +298,7 @@ struct TrimView: View {
                 HStack {
                     Text(clock(model.start))
                     Spacer()
-                    Text(tr("المدة \(clock(model.end - model.start))", "Length \(clock(model.end - model.start))")).bold()
+                    Text(tr("المدة \(clock(model.end - model.start))", "Length \(clock(model.end - model.start))", "長さ \(clock(model.end - model.start))")).bold()
                     Spacer()
                     Text(clock(model.end))
                 }
@@ -305,10 +306,10 @@ struct TrimView: View {
             }
             .environment(\.layoutDirection, .leftToRight)
             HStack {
-                Button { preview() } label: { Label(tr("شغّل المقطع", "Play selection"), systemImage: "play.fill") }
+                Button { preview() } label: { Label(tr("شغّل المقطع", "Play selection", "選択範囲を再生"), systemImage: "play.fill") }
                 Spacer()
-                Button(tr("إلغاء", "Cancel")) { player.pause(); onDone(nil) }.keyboardShortcut(.cancelAction)
-                Button(tr("احفظ", "Save")) { player.pause(); onDone((model.start, model.end)) }.keyboardShortcut(.defaultAction)
+                Button(tr("إلغاء", "Cancel", "キャンセル")) { player.pause(); onDone(nil) }.keyboardShortcut(.cancelAction)
+                Button(tr("احفظ", "Save", "保存")) { player.pause(); onDone((model.start, model.end)) }.keyboardShortcut(.defaultAction)
             }
         }
         .padding(22).padding(.top, 8)

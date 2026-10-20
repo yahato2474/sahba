@@ -12,7 +12,7 @@ enum DocOps {
         let uti = t.uti as CFString
         var dir = url.deletingLastPathComponent()
         if doc.pageCount > 1 {
-            dir = Output.unique(in: dir, base: url.deletingPathExtension().lastPathComponent + tr(" - صفحات", " - Pages"), ext: "")
+            dir = Output.unique(in: dir, base: url.deletingPathExtension().lastPathComponent + tr(" - صفحات", " - Pages", " - ページ"), ext: "")
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
         var outputs: [URL] = []
@@ -88,7 +88,7 @@ enum DocOps {
 
     static func compressPDF(_ url: URL) throws -> URL {
         guard let doc = PDFDocument(url: url) else { throw OpError.unreadable }
-        let out = Output.url(next: url, suffix: tr("مضغوط", "Compressed"), ext: "pdf")
+        let out = Output.url(next: url, suffix: tr("مضغوط", "Compressed", "圧縮"), ext: "pdf")
         // The same "Reduce File Size" filter Preview uses; PDFKit's own image options barely shrink anything.
         let filter = QuartzFilter(url: URL(fileURLWithPath: "/System/Library/Filters/Reduce File Size.qfilter"))
         let ok = filter.map { doc.write(to: out, withOptions: [PDFDocumentWriteOption(rawValue: "QuartzFilter"): $0]) }
@@ -105,7 +105,7 @@ enum DocOps {
                 if let page = doc.page(at: i) { merged.insert(page, at: merged.pageCount) }
             }
         }
-        let out = Output.url(next: first, suffix: tr("مدموج", "Merged"), ext: "pdf")
+        let out = Output.url(next: first, suffix: tr("مدموج", "Merged", "結合"), ext: "pdf")
         guard merged.write(to: out) else { throw OpError.unwritable }
         return out
     }
@@ -113,7 +113,7 @@ enum DocOps {
     static func stripPDF(_ url: URL) throws -> URL {
         guard let doc = PDFDocument(url: url) else { throw OpError.unreadable }
         doc.documentAttributes = [:]
-        let out = Output.url(next: url, suffix: tr("بدون بيانات", "No Metadata"), ext: "pdf")
+        let out = Output.url(next: url, suffix: tr("بدون بيانات", "No Metadata", "情報削除"), ext: "pdf")
         guard doc.write(to: out) else { throw OpError.unwritable }
         return out
     }

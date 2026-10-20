@@ -61,7 +61,7 @@ enum ImageOps {
     static func compress(_ url: URL, quality: Double) throws -> URL {
         let (src, props) = try open(url)
         let t = compressedTarget(url, props: props)
-        let out = Output.url(next: url, suffix: tr("مضغوط", "Compressed"), ext: t.ext)
+        let out = Output.url(next: url, suffix: tr("مضغوط", "Compressed", "圧縮"), ext: t.ext)
         if hasGainMap(src), try saveHDR(url, src: src, props: props, uti: t.uti, quality: quality, keepMetadata: true, to: out) { return out }
         try encode(src, props: props, uti: t.uti, quality: quality, to: out)
         return out
@@ -82,7 +82,7 @@ enum ImageOps {
         let fmt = sameFormat(src, url)
         if hasGainMap(src) {
             let lossy = hdrFormat(fmt)
-            let out = Output.url(next: url, suffix: tr("مدوّر", "Rotated"), ext: lossy.ext)
+            let out = Output.url(next: url, suffix: tr("مدوّر", "Rotated", "回転"), ext: lossy.ext)
             if try saveHDR(url, src: src, props: props, uti: lossy.uti, quality: 0.92, keepMetadata: true, to: out,
                            edit: { $0.oriented(.right) }) { return out }
         }
@@ -95,7 +95,7 @@ enum ImageOps {
         ctx.rotate(by: -.pi / 2)
         ctx.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
         guard let rotated = ctx.makeImage() else { throw OpError.unwritable }
-        let out = Output.url(next: url, suffix: tr("مدوّر", "Rotated"), ext: fmt.ext)
+        let out = Output.url(next: url, suffix: tr("مدوّر", "Rotated", "回転"), ext: fmt.ext)
         try write(rotated, uti: fmt.uti, props: props, to: out)
         return out
     }
@@ -106,7 +106,7 @@ enum ImageOps {
         let fmt = sameFormat(src, url)
         if hasGainMap(src) {
             let lossy = hdrFormat(fmt)
-            let out = Output.url(next: url, suffix: tr("مقصوص", "Cropped"), ext: lossy.ext)
+            let out = Output.url(next: url, suffix: tr("مقصوص", "Cropped", "切り抜き"), ext: lossy.ext)
             let crop: (CIImage) -> CIImage = { img in
                 let e = img.extent // Core Image counts from the bottom
                 return img.cropped(to: CGRect(x: e.minX + rect.minX * e.width, y: e.minY + (1 - rect.maxY) * e.height,
@@ -117,8 +117,8 @@ enum ImageOps {
         guard let image = orientedImage(src, props: props) else { throw OpError.unreadable }
         let w = CGFloat(image.width), h = CGFloat(image.height)
         let px = CGRect(x: rect.minX * w, y: rect.minY * h, width: rect.width * w, height: rect.height * h).integral
-        guard let cropped = image.cropping(to: px) else { throw OpError.failed(tr("ما قدرت أقص", "Couldn't crop")) }
-        let out = Output.url(next: url, suffix: tr("مقصوص", "Cropped"), ext: fmt.ext)
+        guard let cropped = image.cropping(to: px) else { throw OpError.failed(tr("ما قدرت أقص", "Couldn't crop", "切り抜けませんでした")) }
+        let out = Output.url(next: url, suffix: tr("مقصوص", "Cropped", "切り抜き"), ext: fmt.ext)
         try write(cropped, uti: fmt.uti, props: props, to: out)
         return out
     }
@@ -128,7 +128,7 @@ enum ImageOps {
         let (src, props) = try open(url)
         let fmt = sameFormat(src, url)
         let uti = fmt.uti
-        let out = Output.url(next: url, suffix: tr("بدون بيانات", "No Metadata"), ext: fmt.ext)
+        let out = Output.url(next: url, suffix: tr("بدون بيانات", "No Metadata", "情報削除"), ext: fmt.ext)
         let orientation = (props[kCGImagePropertyOrientation] as? Int) ?? 1
         let native = (CGImageSourceGetType(src) as String?) == uti
 
@@ -164,7 +164,7 @@ enum ImageOps {
     static func mergeToPDF(_ urls: [URL]) throws -> URL {
         guard let first = urls.first else { throw OpError.unreadable }
         let pages = try urls.map { try open($0) }
-        let out = Output.url(next: first, suffix: tr("مدموج", "Merged"), ext: "pdf")
+        let out = Output.url(next: first, suffix: tr("مدموج", "Merged", "結合"), ext: "pdf")
         try writePDF(pages, to: out)
         return out
     }

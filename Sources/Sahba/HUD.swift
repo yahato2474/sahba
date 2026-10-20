@@ -20,7 +20,7 @@ enum Jobs {
             }
             if let first = errors.first {
                 let msg = (first as? LocalizedError)?.errorDescription ?? "\(first)"
-                throw OpError.failed(files.count > 1 ? tr("\(errors.count) من \(files.count) ما زبطت: \(msg)", "\(errors.count) of \(files.count) failed: \(msg)") : msg)
+                throw OpError.failed(files.count > 1 ? tr("\(errors.count) من \(files.count) ما زبطت: \(msg)", "\(errors.count) of \(files.count) failed: \(msg)", "\(files.count)個中\(errors.count)個が失敗: \(msg)") : msg)
             }
             return outputs
         }
@@ -33,14 +33,14 @@ enum Jobs {
                 let outputs = try work(files) { p in HUD.shared.progress(id, p) }
                 outputs.forEach { Log.write("output \($0.path)") }
                 DispatchQueue.main.async {
-                    let name = outputs.count == 1 ? outputs[0].lastPathComponent : tr("\(outputs.count) ملفات", "\(outputs.count) files")
-                    HUD.shared.finish(id, title: tr("خلص: \(name)", "Done: \(name)"), failed: false)
+                    let name = outputs.count == 1 ? outputs[0].lastPathComponent : tr("\(outputs.count) ملفات", "\(outputs.count) files", "\(outputs.count)個のファイル")
+                    HUD.shared.finish(id, title: tr("خلص: \(name)", "Done: \(name)", "完了: \(name)"), failed: false)
                     onOutputs?(outputs)
                 }
             } catch {
                 let msg = (error as? LocalizedError)?.errorDescription ?? "\(error)"
                 Log.write("job failed \(title): \(msg)")
-                DispatchQueue.main.async { HUD.shared.finish(id, title: tr("ما زبط: \(msg)", "Failed: \(msg)"), failed: true) }
+                DispatchQueue.main.async { HUD.shared.finish(id, title: tr("ما زبط: \(msg)", "Failed: \(msg)", "失敗: \(msg)"), failed: true) }
             }
         }
     }
